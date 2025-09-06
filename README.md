@@ -1,25 +1,48 @@
 # UPE Factorization
 
 Experimental implementation of the **UPE (Unité de Prédiction d'Écarts)** algorithm for integer factorization.  
-This project explores two complementary modes:
+This repository combines:
 
-- **UPE-Narrow**: scanning concentric rings of radius *T* around √N, optimized for cases where the two prime factors p and q are close to √N.  
-- **UPE-Wide**: expanding rings with radius doubling (T, 2T, 4T, …), designed for larger gaps between p and q.
-
----
-
-## Features
-- Written in **JavaScript (BigInt)**, runs directly in the browser.  
-- Supports numbers up to **2⁶⁴ − 1 ≈ 1.84×10¹⁹**.  
-- Uses a small prime sieve (≤ B) before UPE.  
-- Wheel of size 30 for candidate reduction (only residues ±1, ±7, ±11, ±13).  
-- Purely experimental — not intended as a production-grade factorizer.
+1. **Calculator** — interactive demo in the browser (`index.html`, `script.js`, `upe.js`).  
+2. **Paper** — research note written in Markdown (`papier.md`).  
 
 ---
 
-## Usage
+## 🔢 Online Calculator
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/YOUR-USERNAME/upe-factorization.git
-   cd upe-factorization
+The UPE calculator runs entirely in the browser with **JavaScript BigInt**.  
+It supports integers up to **2⁶⁴ − 1 ≈ 1.84×10¹⁹**.
+
+👉 **[Try the calculator online (GitHub Pages)](https://YOUR-USERNAME.github.io/upe-factorization/)**  
+
+*(replace `YOUR-USERNAME` with your GitHub username)*
+
+### Usage
+- Enter an integer `N`.  
+- Adjust parameters:  
+  - **B**: sieve limit for small factors.  
+  - **T**: radius of each ring around √N.  
+  - **K**: number of rings.  
+- Choose mode:  
+  - **UPE-Narrow** → factors close to √N.  
+  - **UPE-Wide** → factors further apart.  
+- Click **Factorize** and check the output.
+
+### Example Inputs
+- `999100008180000007` → factors `970000007 × 1030000001`  
+- `1000000016000000063` → factors `1000000007 × 1000000009`
+
+---
+
+## 📄 Paper
+
+The file [`papier.md`](./papier.md) contains a structured scientific note:  
+- **Abstract, Methods, Results, Discussion, References**  
+- Explains UPE-Narrow and UPE-Wide  
+- Includes worked examples and theoretical background  
+
+You can read it directly on GitHub or convert it to PDF/DOCX using [Pandoc](https://pandoc.org/).
+
+---
+
+## 📂 Repository Structure
