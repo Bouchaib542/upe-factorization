@@ -1,30 +1,145 @@
-<!doctype html><html lang="fr"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>UPE — Narrow & Wide</title>
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UPE (Unité de Prédiction d'Écarts) — Narrow & Wide</title>
 <style>
   body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;max-width:860px;margin:24px auto;padding:0 12px}
-  input{padding:6px 8px}
-  button{padding:8px 12px;margin-right:6px}
-  pre{background:#f6f8fa;padding:12px;border-radius:8px;white-space:pre-wrap}
+  h1{font-size:20px;margin:0 0 8px}
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+  input{padding:8px 10px;font-size:16px}
+  button{padding:10px 14px;font-size:16px;border:1px solid #ccc;border-radius:8px;cursor:pointer}
+  pre{background:#f6f8fa;padding:12px;border-radius:8px;white-space:pre-wrap}
+  small{opacity:.8}
 </style>
-</head><body>
-<h1>UPE (Unité de Prédiction d'Écarts) — Modes Narrow & Wide</h1>
+</head>
+<body>
+  <h1># UPE (Unité de Prédiction d'Écarts) — Modes Narrow & Wide</h1>
+  <div class="row">
+    N: <input id="nin" value="999100008180000007" size="28">
+    B: <input id="B" value="1000" size="8">
+    T: <input id="T" value="1000000" size="12">
+    K: <input id="K" value="8" size="8">
+    <button id="auto">Auto-tune</button>
+  </div>
+  <div class="row">
+    <button id="go-narrow">UPE-Narrow</button>
+    <button id="go-wide">UPE-Wide</button>
+  </div>
+  <pre id="out"></pre>
+  <p><small>Narrow = anneaux de rayon T autour de √N. Wide = rayons géométriques (T,2T,4T,…). BigInt requis (Chrome/Edge/Firefox/Safari récents).</small></p>
 
-<div class="row">
-  N: <input id="nin" value="999100008180000007" size="28">
-  B: <input id="B" value="1000" size="8">
-  T: <input id="T" value="1000000" size="12">
-  K: <input id="K" value="8" size="8">
-  <button id="auto">Auto-tune</button>
-</div>
+<script type="module">
+// ===== Utils BigInt =====
+function isqrt(n){ if(n<0n) throw new Error("neg"); if(n<2n) return n; let x=n,y=(x+1n)>>1n; while(y<x){x=y;y=(x+n/x)>>1n} return x; }
+function gcd(a,b){ while(b){ const t=a%b; a=b; b=t; } return a; }
 
-<div class="row">
-  <button id="go-narrow">UPE-Narrow</button>
-  <button id="go-wide">UPE-Wide</button>
-</div>
+// ===== UPE core (wheel 30) =====
+const W30 = new Set([1n,29n,7n,23n,11n,19n,13n,17n]); // ±1, ±7, ±11, ±13
+function* ringCandidates(center, radius){
+  const start = (center - radius) | 1n, end = (center + radius);
+  for(let x=start; x<=end; x+=2n){ const m=x%30n; if(W30.has((m+30n)%30n)) yield x; }
+}
+function testDiv(N, cand){ if(cand<=1n) return null; if(N%cand===0n) return cand; const q=N/cand; if(q>1n && N%q===0n) return q; return null; }
 
-<pre id="out"></pre>
+function sieveSmall(N,B){
+  for(let p=2n;p<=B;p++) if(N%p===0n) return [p, N/p];
+  return null;
+}
 
-<script type="module" src="./script.js"></script>
-</body></html>
+function upeNarrow(N,B=1000n,T=1_000_000n,K=8n){
+  const s = sieveSmall(N,B); if(s) return s;
+  const center = (isqrt(N) | 1n);
+  for(let k=0n;k<=K;k++){
+    const R = k*T;
+    for(const cand of ringCandidates(center,R)){
+      const d = testDiv(N,cand);
+      if(d) return [d, N/d];
+    }
+  }
+  return null;
+}
+
+function upeWide(N,B=1000n,T=1_000_000n,K=8n){
+  const s = sieveSmall(N,B); if(s) return s;
+  const center = (isqrt(N) | 1n);
+  let R = T;
+  for(let i=0n;i<K;i++){
+    for(const cand of ringCandidates(center,R)){
+      const d = testDiv(N,cand);
+      if(d) return [d, N/d];
+    }
+    R <<= 1n;
+  }
+  return null;
+}
+
+function autotune(N){
+  const n = Number(N); // OK jusqu'à ~1e18
+  const s = Math.sqrt(n);
+  const delta = Math.max(1, Math.ceil(s * Math.log(Math.log(n)) / Math.log(n)));
+  const T = 1_000_000n;
+  const K = BigInt(Math.max(2, Math.ceil(delta / Number(T))));
+  return { T, K };
+}
+
+// ===== UI =====
+const $ = s => document.querySelector(s);
+const out = $('#out');
+const log = s => out.textContent += s + "\n";
+const clearOut = () => out.textContent = "";
+
+$('#auto').onclick = ()=>{
+  const N = BigInt($('#nin').value.trim());
+  const {T,K} = autotune(N);
+  $('#T').value = T.toString();
+  $('#K').value = K.toString();
+};
+
+$('#go-narrow').onclick = ()=>{
+  clearOut();
+  try{
+    const N = BigInt($('#nin').value.trim());
+    const B = BigInt($('#B').value.trim());
+    const T = BigInt($('#T').value.trim());
+    const K = BigInt($('#K').value.trim());
+    const t0 = performance.now();
+    const res = upeNarrow(N,B,T,K);
+    const t1 = performance.now();
+    if(res){
+      const [a,b] = res.sort((x,y)=>(x<y?-1:1));
+      log(`N=${N}`);
+      log(`p=${a}  q=${b}`);
+      log(`check: ${a*b===N}`);
+    }else{
+      log('Aucun facteur dans la portée.');
+    }
+    log(`Temps: ${(t1-t0).toFixed(1)} ms`);
+  }catch(e){ log('Erreur: '+e.message); }
+};
+
+$('#go-wide').onclick = ()=>{
+  clearOut();
+  try{
+    const N = BigInt($('#nin').value.trim());
+    const B = BigInt($('#B').value.trim());
+    const T = BigInt($('#T').value.trim());
+    const K = BigInt($('#K').value.trim());
+    const t0 = performance.now();
+    const res = upeWide(N,B,T,K);
+    const t1 = performance.now();
+    if(res){
+      const [a,b] = res.sort((x,y)=>(x<y?-1:1));
+      log(`N=${N}`);
+      log(`p=${a}  q=${b}`);
+      log(`check: ${a*b===N}`);
+    }else{
+      log('Aucun facteur dans la portée.');
+    }
+    log(`Temps: ${(t1-t0).toFixed(1)} ms`);
+  }catch(e){ log('Erreur: '+e.message); }
+};
+</script>
+</body>
+</html>
