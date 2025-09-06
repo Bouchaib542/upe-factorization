@@ -11,7 +11,7 @@ This repository combines:
 ## 🔢 Online Calculator
 
 The UPE calculator runs entirely in the browser with **JavaScript BigInt**.  
-It supports integers up to **2⁶⁴ − 1 ≈ 1.84×10¹⁹**.
+It supports integers of **any size** in principle (BigInt has arbitrary precision).  
 
 👉 **[Try the calculator online (GitHub Pages)](https://YOUR-USERNAME.github.io/upe-factorization/)**  
 
@@ -31,6 +31,15 @@ It supports integers up to **2⁶⁴ − 1 ≈ 1.84×10¹⁹**.
 ### Example Inputs
 - `999100008180000007` → factors `970000007 × 1030000001`  
 - `1000000016000000063` → factors `1000000007 × 1000000009`
+
+---
+
+## ⚠️ Practical Limits
+
+- BigInt allows integers with **hundreds of digits**.  
+- However, the **UPE algorithm** is efficient mainly for numbers up to **18–19 digits (~10¹⁸–10¹⁹)**.  
+- Beyond ~20 digits, ring scanning becomes too slow, and hybridization with classical methods (Fermat, Pollard–Rho, ECM) is needed.  
+- The calculator will still accept larger inputs, but computations may take a very long time in the browser.  
 
 ---
 
